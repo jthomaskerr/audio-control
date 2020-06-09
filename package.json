@@ -1,0 +1,16 @@
+{
+  "name": "audio-control",
+  "version": "1.0.0",
+  "description": "Update audio devices and pc volume via http",
+  "main": "src/index.mjs",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Joseph Thomas-Kerr",
+  "license": "ISC",
+  "dependencies": {
+    "punycode": "^2.1.1",
+    "server": "^1.0.27"
+  }
+}
