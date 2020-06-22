@@ -1,5 +1,7 @@
+#!/usr/bin/node --experimental-modules
+
 import server from 'server';
-import MediaService  from './media.js';
+import MediaService  from './src/media.js';
 
 const { get, post, error } = server.router;
 const { status, redirect, json, header } = server.reply;
