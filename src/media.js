@@ -2,7 +2,7 @@ const util = require('util');
 const execFile  = util.promisify(require('child_process').execFile);
 const path = require('path');
 const { decode,  encode, toASCII , toUnicode } = require('punycode');
-
+const { min, max } = Math;
     
 module.exports = class MediaService {
     constructor() {
@@ -11,13 +11,18 @@ module.exports = class MediaService {
     async _svv(cmd, ...opts) {
         const executable = path.join(__dirname, '..', 'SoundVolumeView.exe');
         const allOpts = [ '/' + cmd ].concat(opts);
-        const {stdout, exitCode} = await execFile(executable, allOpts);
-        console.log("Executed", executable, allOpts, ":", exitCode)
-        if (exitCode) {
-            return exitCode;
-        } else {
-            return stdout;
+        try {
+            const {stdout, exitCode} = await execFile(executable, allOpts);
+            console.log("Executed", executable, allOpts, ":", exitCode)
+            if (exitCode) {
+                return exitCode;
+            } else {
+                return stdout;
+            }
+        } catch(err) {
+            return err.code;
         }
+            
     }
 
     async list() {
@@ -44,13 +49,44 @@ module.exports = class MediaService {
         
     }
 
-    async setOutput(value) {
-        const result = await this._svv('SetDefault', value, 1);
-        console.log(result);
-        
+    async getOutput() {
         const devices = await this.list();
         const activeDevice = devices.find( device => device.default_multimedia === "Render" );
         return (activeDevice || UNKNOWN_DEVICE);
+    }
+    
+    async setOutput(value) {
+        const result = await this._svv('SetDefault', value, 1);
+        return await getOutput();
+    }
+    
+    async _idOrActive(id) {
+        id = id || (await this.getOutput()).command_line_friendly_id;
+        if (! id) throw new Error("No device found");
+        
+        return id;
+    }
+    
+    async setVolume(percent, deviceId = null) {
+        const id = await this._idOrActive(deviceId);
+        await this._svv("SetVolume", id, max(0, min(100, value)));
+        return await this.getVolume(id);
+    }
+    
+    async getVolume(deviceId = null) {
+        const id = await this._idOrActive(deviceId);
+        return (await this._svv("GetPercent", id)) / 10;
+    }
+    
+    async setMute(active, deviceId = null) {
+        const id = await this._idOrActive(deviceId);
+        await this._svv( active ? "Mute" : "Unmute", id);
+        return this.getMute(id);
+    }
+    
+    async getMute(active, deviceId = null) {
+        const id = await this._idOrActive(deviceId); 
+        return await this._svv("GetMute", id);
     }
 }
 
